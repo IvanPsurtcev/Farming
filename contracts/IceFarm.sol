@@ -48,7 +48,7 @@ contract IceFarm {
         stakingBalance[msg.sender] += amount;
         startTime[msg.sender] = block.timestamp;
         isStaking[msg.sender] = true;
-        emit Stake(msd.sender, amount);
+        emit Stake(msg.sender, amount);
     }
 
     function unstake(uint256 amount) public {
