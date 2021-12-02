@@ -11,7 +11,7 @@ contract IceToken is ERC20, Ownable {
     }
 
     function _transferOwnership(address newOwner) public onlyOwner {
-        transferownership(newOwner);
+        transferOwnership(newOwner);
     }
 }
 
