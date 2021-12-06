@@ -114,3 +114,58 @@ describe("Unsake", async() => {
             .to.eq(false)
     });
 });
+
+describe("WithdrawYield", async() => {
+    beforeEach(async() => {
+        await iceToken._transferOwnership(iceFarm.address)
+        let toTransfer = ethers.utils.parseEther("10")
+        await mockDai.connect(alice).approve(iceFarm.address, toTransfer)
+        await iceFarm.connect(alice).stake(toTransfer)
+    });
+
+    it("should return correct yield time", async() => {
+        let timeStart = await iceFarm.startTime(alice.address)
+        expect(Number(timeStart))
+            .to.be.greaterThan(0)
+
+        await time.increase(86400)
+        expect(await iceFarm.calculateYieldTime(alice.address))
+            .to.eq((86400))
+    });
+
+    it("should mint correct token amount in total supply and user", async() => {
+        await time.increase(86400)
+
+        let _time = await iceFarm.calculateYieldTime(alice.address)
+        let formatTime = _time / 86400
+        let staked = await iceFarm.stakingBalance(alice.address)
+        let bal = staked * formatTime
+        let newBal = ethers.utils.formatEther(bal.toString())
+        let expected = Number.parseFloat(newBal).toFixed(3)
+
+        await iceFarm.connect(alice).withdrawYield()
+
+        res = await iceToken.totalSupply()
+        let newRes = ethers.utils.formatEther(res)
+        let formatRes = Number.parseFloat(newRes).toFixed(3).toString()
+
+        expect(expected)
+            .to.eq(formatRes)
+
+        res = await iceToken.balanceOf(alice.address)
+        newRes = ethers.utils.formatEther(res)
+        formatRes = Number.parseFloat(newRes).toFixed(3).toString()
+
+        expect(expected)
+            .to.eq(formatRes)
+    });
+
+    it("should update yield balance when unstaked", async() => {
+        await time.increase(86400)
+        await iceFarm.connect(alice).unstake(ethers.utils.parseEther("5"))
+
+        res = await iceFarm.iceBalance(alice.address)
+        expect(Number(ethers.utils.formatEther(res)))
+            .to.be.approximately(10, .001)
+    });
+});
